@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="card main-card">
+      <div class="header">
+        <div>
+          <h1>Fatura Mutabakat Ekranı</h1>
+          <p>PCC ve BPPS sistemlerinde fatura durumunu karşılaştıran demo sorgu ekranı</p>
+        </div>
+        <div class="status-pill">DEMO</div>
+      </div>
+
+      <div class="search-row">
+        <input id="invoiceInput" type="text" placeholder="Fatura No gir (örn: FD60351N9DD0EA)" />
+        <button id="searchBtn">Sorgula</button>
+      </div>
+
+      <div class="sample-box">
+        <strong>Deneme fatura numaraları:</strong>
+        <span>FD60351N9DD0EA</span>
+        <span>FD60351NA6DA85</span>
+        <span>FD60351O9AB618</span>
+      </div>
+
+      <div id="resultCard" class="result-card empty">
+        <div class="placeholder">
+          Bir fatura numarası girip sorgula. Sonuç burada görünecek.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("invoiceInput");
+    const btn = document.getElementById("searchBtn");
+    const resultCard = document.getElementById("resultCard");
+
+    async function searchInvoice() {
+      const invoiceNo = input.value.trim();
+
+      resultCard.className = "result-card loading";
+      resultCard.innerHTML = "<div class='placeholder'>Sorgulanıyor...</div>";
+
+      const response = await fetch("/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceNo })
+      });
+
+      const data = await response.json();
+
+      const resultClass = data.result || "info";
+      resultCard.className = "result-card " + resultClass;
+
+      resultCard.innerHTML = `
+        <div class="result-header">
+          <h2>Sonuç</h2>
+          <span class="badge ${resultClass}">${data.status || "Bilgi"}</span>
+        </div>
+
+        <div class="result-grid">
+          <div class="field"><span>Fatura No</span><strong>${data.invoiceNo || "-"}</strong></div>
+          <div class="field"><span>PCC</span><strong>${data.pcc || "-"}</strong></div>
+          <div class="field"><span>BPPS</span><strong>${data.bpps || "-"}</strong></div>
+          <div class="field"><span>Tutar</span><strong>${data.amount || "-"}</strong></div>
+          <div class="field"><span>Durum</span><strong>${data.status || "-"}</strong></div>
+          <div class="field"><span>Tarih</span><strong>${data.date || "-"}</strong></div>
+        </div>
+
+        <div class="note-box">
+          <span>Not</span>
+          <p>${data.note || "-"}</p>
+        </div>
+      `;
+    }
+
+    btn.addEventListener("click", searchInvoice);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") searchInvoice();
+    });
+  </script>
+</body>
+</html>
